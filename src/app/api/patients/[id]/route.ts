@@ -109,7 +109,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json({ patient: decrypted });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update patient." }, { status: 400 });
   }
 }

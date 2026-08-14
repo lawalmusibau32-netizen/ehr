@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { normalizeRoleKey } from "@/lib/roles";
 import { supplySchema } from "@/lib/validations/inventory";
 import { isRateLimited } from "@/lib/rate-limit";
 
@@ -82,7 +81,7 @@ export async function POST(request: Request) {
     audit(user.sub, "CREATE", "inventory_supplies", String(supply.supplyId), `Added supply: ${supply.name}`, request.headers.get("x-forwarded-for") ?? "unknown");
 
     return NextResponse.json({ supply }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create supply." }, { status: 400 });
   }
 }

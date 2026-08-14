@@ -87,7 +87,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const updateData: Record<string, unknown> = {};
   if (displayName !== undefined) updateData.displayName = displayName;
-  if (email !== undefined) updateData.email = email || null;
+  if (email !== undefined) {
+    if (!email) {
+      return NextResponse.json({ error: "Email is required — MFA codes are sent to it." }, { status: 400 });
+    }
+    updateData.email = email;
+  }
   if (roleId !== undefined) updateData.roleId = roleId;
 
   if (password) {
@@ -113,7 +118,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       actionType: "UPDATE",
       entityName: "users",
       entityId: String(userId),
-      details: `Updated user ${user.username}${password ? " (password reset)" : ""}.`,
+      details: `Updated user ${user.username}${password ? " (password reset)" : ""}${email !== undefined && email !== existing.email ? " (email changed — MFA codes will go to new address)" : ""}.`,
       ipAddress: request.headers.get("x-forwarded-for") ?? "unknown",
     },
   });

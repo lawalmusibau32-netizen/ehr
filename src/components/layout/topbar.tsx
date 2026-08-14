@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User, Shield, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { LogOut, User, Shield, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +67,15 @@ export function Topbar({ userName, roleName }: TopbarProps) {
                     </span>
                   </div>
                 </div>
+
+                <Link
+                  href="/account/security"
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground/70 hover:text-foreground hover:bg-white/[0.06] rounded-lg transition-all duration-300"
+                  onClick={() => setOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Account Security
+                </Link>
 
                 <form action={handleLogout}>
                   <Button

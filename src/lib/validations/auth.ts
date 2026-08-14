@@ -9,7 +9,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   username: z.string().min(1, "Username is required.").max(50),
   displayName: z.string().min(1, "Display name is required.").max(120),
-  email: z.string().email("Invalid email.").optional().or(z.literal("")),
+  email: z.string().email("Invalid email.").min(1, "Email is required — MFA codes are sent to it."),
   roleName: z.string().min(1, "Role is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });

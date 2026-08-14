@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
-import { normalizeRoleKey } from "@/lib/roles";
 import { patientSchema } from "@/lib/validations/patient";
 import { encryptValue, decryptValue } from "@/lib/crypto";
 import { isRateLimited } from "@/lib/rate-limit";
@@ -114,7 +113,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ patient }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create patient." }, { status: 400 });
   }
 }

@@ -30,6 +30,7 @@ export default function UsersList({ users: initial, roles }: Props) {
   const [editRoleId, setEditRoleId] = useState(0);
   const [editPassword, setEditPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   function startEdit(u: UserItem) {
@@ -96,6 +97,21 @@ export default function UsersList({ users: initial, roles }: Props) {
     } catch { setError("A network error occurred."); }
   }
 
+  async function resetMfa(userId: number, username: string) {
+    if (!confirm(`Reset MFA for ${username}? They will need to re-enroll at next login.`)) return;
+    setError("");
+    try {
+      const res = await fetch("/api/auth/mfa/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Failed to reset MFA."); return; }
+      setMessage(data.message ?? "MFA reset.");
+    } catch { setError("A network error occurred."); }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -110,6 +126,9 @@ export default function UsersList({ users: initial, roles }: Props) {
 
       {error && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">{error}</div>
+      )}
+      {message && (
+        <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-600">{message}</div>
       )}
 
       <div className="rounded-md border overflow-x-auto">
@@ -143,6 +162,7 @@ export default function UsersList({ users: initial, roles }: Props) {
                 </td>
                 <td className="p-3 text-right whitespace-nowrap">
                   <button onClick={() => startEdit(u)} style={{ color: '#2563eb', fontSize: '0.75rem', marginRight: '0.75rem', border: 'none', background: 'none', cursor: 'pointer' }}>Edit</button>
+                  <button onClick={() => resetMfa(u.userId, u.username)} style={{ color: '#7c3aed', fontSize: '0.75rem', marginRight: '0.75rem', border: 'none', background: 'none', cursor: 'pointer' }}>Reset MFA</button>
                   <button onClick={() => toggleStatus(u.userId, u.username, u.isActive)} style={{ fontSize: '0.75rem', marginRight: '0.75rem', border: 'none', background: 'none', cursor: 'pointer', color: u.isActive === "Y" ? '#d97706' : '#059669' }}>
                     {u.isActive === "Y" ? "Deactivate" : "Activate"}
                   </button>

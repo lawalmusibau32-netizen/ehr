@@ -91,8 +91,9 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs text-muted-foreground/70 font-medium">Email (optional)</Label>
-          <Input id="email" name="email" type="email" />
+          <Label htmlFor="email" className="text-xs text-muted-foreground/70 font-medium">Email <span className="text-destructive">*</span></Label>
+          <Input id="email" name="email" type="email" required />
+          <p className="text-[10px] text-muted-foreground/50 mt-1">Required — MFA verification codes are sent to this address.</p>
         </div>
 
         <div className="space-y-2">

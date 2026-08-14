@@ -69,7 +69,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     audit(user.sub, "UPDATE", "inventory_supplies", String(supplyId), `Updated supply: ${supply.name}`, request.headers.get("x-forwarded-for") ?? "unknown");
 
     return NextResponse.json({ supply });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update supply." }, { status: 400 });
   }
 }
