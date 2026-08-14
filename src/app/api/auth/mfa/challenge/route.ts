@@ -25,7 +25,10 @@ export async function POST(request: Request) {
     const userId = mfaToken ? verifyPendingToken(mfaToken, "challenge") : null;
     if (!userId) return NextResponse.json({ error: "Session expired. Please log in again." }, { status: 401 });
 
-    const user = await prisma.user.findUnique({ where: { userId } });
+    const user = await prisma.user.findUnique({
+      where: { userId },
+      include: { role: true },
+    });
     if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
     if (user.mfaEnabled !== "Y") {
       return NextResponse.json({ error: "MFA is not enabled for this account." }, { status: 400 });
@@ -95,7 +98,15 @@ export async function POST(request: Request) {
       data: { otpAttempts: 0 },
     });
 
-    return issueSessionResponse(user, request);
+    return issueSessionResponse(
+      {
+        userId: user.userId,
+        username: user.username,
+        roleName: user.role.roleName,
+        email: user.email,
+      },
+      request
+    );
   } catch {
     return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
   }
