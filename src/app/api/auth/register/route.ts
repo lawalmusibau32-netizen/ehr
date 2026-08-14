@@ -4,9 +4,18 @@ import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations/auth";
 import { verifyAccessToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { normalizeRoleKey } from "@/lib/roles";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const rate = isRateLimited(request, 30, 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(rate.retryAfter) } }
+      );
+    }
+
     const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
     const authUser = token ? verifyAccessToken(token) : null;
 

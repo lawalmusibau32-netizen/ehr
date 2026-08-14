@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
 import { appointmentSchema } from "@/lib/validations/appointment";
+import { rateLimitResponse } from "@/lib/rate-limit";
 
 function getUser(request: Request) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -34,6 +35,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const user = getUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -87,6 +91,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
   const user = getUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   const appointmentId = Number(id);
   const body = await request.json().catch(() => ({}));

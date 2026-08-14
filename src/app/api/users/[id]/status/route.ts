@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyAccessToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { normalizeRoleKey } from "@/lib/roles";
+import { rateLimitResponse } from "@/lib/rate-limit";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
+
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const authUser = token ? verifyAccessToken(token) : null;
 

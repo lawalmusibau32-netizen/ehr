@@ -5,9 +5,22 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations/auth";
 import { normalizeRoleKey } from "@/lib/roles";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const rate = isRateLimited(
+      request,
+      parseInt(process.env.LOGIN_RATE_LIMIT_ATTEMPTS ?? "10", 10),
+      parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS ?? (60 * 1000).toString(), 10)
+    );
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please wait before trying again." },
+        { status: 429, headers: { "Retry-After": String(rate.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {

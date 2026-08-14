@@ -4,6 +4,7 @@ import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeRoleKey } from "@/lib/roles";
 import { supplySchema } from "@/lib/validations/inventory";
+import { rateLimitResponse } from "@/lib/rate-limit";
 
 const READ_ROLES = ["administrator", "doctor", "nurse", "receptionist"];
 const WRITE_ROLES = ["administrator", "receptionist"];
@@ -35,6 +36,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!user || !WRITE_ROLES.includes(user.roleKey)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -76,6 +80,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!user || normalizeRoleKey(user.role) !== "administrator") {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   const supplyId = Number(id);
   const supply = await prisma.inventorySupply.findUnique({ where: { supplyId } });

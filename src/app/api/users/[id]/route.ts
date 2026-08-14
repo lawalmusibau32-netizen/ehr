@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { verifyAccessToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { normalizeRoleKey } from "@/lib/roles";
+import { rateLimitResponse } from "@/lib/rate-limit";
 
 function getUser(request: Request) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -16,6 +17,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!authUser || normalizeRoleKey(authUser.role) !== "administrator") {
     return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   }
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   const userId = Number(id);
   if (authUser.sub === userId) {
@@ -61,6 +65,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!authUser || normalizeRoleKey(authUser.role) !== "administrator") {
     return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   }
+
+  const limited = rateLimitResponse(request, 60, 60 * 1000);
+  if (limited) return limited;
 
   const userId = Number(id);
   const body = await request.json();

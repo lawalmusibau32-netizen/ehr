@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
+import { isRateLimited } from "@/lib/rate-limit";
 
 function getUser(request: Request) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -66,6 +67,14 @@ export async function POST(request: Request) {
   const user = getUser(request);
   if (!user || !["administrator", "doctor", "nurse"].includes(user.roleKey)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const rate = isRateLimited(request, 60, 60 * 1000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfter) } }
+    );
   }
 
   try {

@@ -4,6 +4,7 @@ import { AUTH_COOKIE_NAME, verifyAccessToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { normalizeRoleKey } from "@/lib/roles";
 import { supplySchema } from "@/lib/validations/inventory";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const READ_ROLES = ["administrator", "doctor", "nurse", "receptionist"];
 const WRITE_ROLES = ["administrator", "receptionist"];
@@ -44,6 +45,14 @@ export async function POST(request: Request) {
   const user = getUser(request);
   if (!user || !WRITE_ROLES.includes(user.roleKey)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const rate = isRateLimited(request, 60, 60 * 1000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfter) } }
+    );
   }
 
   try {
